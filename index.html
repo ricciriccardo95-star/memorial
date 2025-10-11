@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="it" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GESTIONALE CLASSIFICHE MEMORIAL D'ALOJA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Stili personalizzati e animazioni */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0F172A; /* Slate 900 */
+        }
+
+        /* Effetto di sfondo con gradienti animati */
+        .background-gradient {
+            position: fixed; 
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            filter: blur(100px);
+            z-index: -1;
+        }
+
+        .gradient-1 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.4), transparent 70%);
+            animation: pulse 10s infinite alternate;
+        }
+
+        .gradient-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 70%);
+            animation: pulse 12s infinite alternate-reverse;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9) rotate(0deg); }
+            100% { transform: scale(1.2) rotate(20deg); }
+        }
+
+        /* Animazione per le card all'ingresso */
+        .card-enter {
+            animation: card-enter-animation 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+        }
+
+        @keyframes card-enter-animation {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* Stile specifico per i link nella navbar in modo che siano grandi */
+        .main-link {
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
+        }
+        .main-link:hover {
+            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.2), 0 10px 10px -5px rgba(59, 130, 246, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center text-white p-4 antialiased">
+
+    <div class="fixed top-0 left-0 w-full h-full -z-10">
+        <div class="background-gradient gradient-1"></div>
+        <div class="background-gradient gradient-2"></div>
+    </div>
+
+    <header class="w-full max-w-5xl mx-auto pt-8 pb-4 text-center relative">
+        <h1 class="text-4xl md:text-5xl font-black tracking-tight text-slate-100 mb-2">
+            GESTIONALE CLASSIFICHE
+        </h1>
+        <h2 class="text-xl md:text-2xl font-light text-blue-400 mb-6">
+            MEMORIAL D'ALOJA
+        </h2>
+    </header>
+
+    <main id="app-container" class="w-full max-w-5xl mx-auto py-4 flex flex-col items-center">
+        
+        <section id="home-page" class="w-full">
+             <div class="grid w-full grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <a href="crea_equipaggi.html" class="main-link block p-8 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-lg hover:bg-white/10 transition-all duration-300 card-enter hover:scale-[1.03] hover:border-blue-400/50" style="animation-delay: 0.3s;">
+                    <div class="mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-blue-400 group-hover:scale-110 transition-transform">
+                            <path d="M17 19c-.2-.5-1-.9-1.9-.9-1.8 0-3.6.9-4.7 2.4"/>
+                            <path d="M21 17c-.2-.5-1-.9-1.9-.9-1.8 0-3.6.9-4.7 2.4"/>
+                            <path d="M15 5c0 3-2 5-5 5S5 8 5 5s2-5 5-5 5 2 5 5Z"/>
+                            <path d="M20 10c0 3-2 5-5 5s-5-2-5-5 2-5 5-5 5 2 5 5Z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-bold text-slate-100 mb-1">CREA EQUIPAGGI</h2>
+                    <p class="text-sm text-slate-400">Aggiungi, modifica o elimina le formazioni di gara.</p>
+                </a>
+                
+                <a href="assegna_tempi.html" class="main-link block p-8 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-lg hover:bg-white/10 transition-all duration-300 card-enter hover:scale-[1.03] hover:border-purple-400/50" style="animation-delay: 0.5s;">
+                    <div class="mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-purple-400 group-hover:scale-110 transition-transform">
+                            <circle cx="12" cy="13" r="8"/>
+                            <polyline points="12 9 12 13 14 15"/>
+                            <path d="M18.3 5.7L16 8"/>
+                            <path d="M5.7 5.7L8 8"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-bold text-slate-100 mb-1">ASSEGNA TEMPI</h2>
+                    <p class="text-sm text-slate-400">Inserisci i tempi di gara e calcola i punteggi.</p>
+                </a>
+                
+                <a href="classifiche.html" class="main-link block p-8 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-lg hover:bg-white/10 transition-all duration-300 card-enter hover:scale-[1.03] hover:border-emerald-400/50" style="animation-delay: 0.7s;">
+                    <div class="mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-emerald-400 group-hover:scale-110 transition-transform">
+                            <path d="M12 21.5V10l3.96-3.96a2 2 0 0 1 2.83 0L22 8.35"/>
+                            <path d="M12 21.5V10l-3.96-3.96a2 2 0 0 0-2.83 0L2 8.35"/>
+                            <path d="M15.42 16.5L12 10 8.58 16.5a2 2 0 0 0-.29 1.13c0 1.28.66 2.5 1.7 3.25l2.02 1.43 2.02-1.43c1.04-.75 1.7-1.97 1.7-3.25a2 2 0 0 0-.29-1.13Z"/>
+                            <path d="m14 7 1.4-1.4a2 2 0 0 0 0-2.83L13 1"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-bold text-slate-100 mb-1">CLASSIFICHE</h2>
+                    <p class="text-sm text-slate-400">Visualizza la classifica in tempo reale (Maxischermo).</p>
+                </a>
+                
+            </div>
+        </section>
+        
+    </main>
+
+</body>
+</html>
