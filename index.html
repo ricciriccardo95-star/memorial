@@ -3,138 +3,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GESTIONALE CLASSIFICHE MEMORIAL D'ALOJA</title>
+    <title>Classifiche Pubbliche - Memorial D'Aloja</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
     
-    <style>
-        /* Stili personalizzati e animazioni */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0F172A; /* Slate 900 */
-        }
-
-        /* Effetto di sfondo con gradienti animati */
-        .background-gradient {
-            position: fixed; 
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            filter: blur(100px);
-            z-index: -1;
-        }
-
-        .gradient-1 {
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.4), transparent 70%);
-            animation: pulse 10s infinite alternate;
-        }
-
-        .gradient-2 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 70%);
-            animation: pulse 12s infinite alternate-reverse;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.9) rotate(0deg); }
-            100% { transform: scale(1.2) rotate(20deg); }
-        }
-
-        /* Animazione per le card all'ingresso */
-        .card-enter {
-            animation: card-enter-animation 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-        }
-
-        @keyframes card-enter-animation {
-            0% {
-                opacity: 0;
-                transform: translateY(30px) scale(0.95);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
+    <!-- Firebase Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        /* Stile specifico per i link nella navbar in modo che siano grandi */
-        .main-link {
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
-        }
-        .main-link:hover {
-            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.2), 0 10px 10px -5px rgba(59, 130, 246, 0.1);
-        }
+        // --- CONFIGURAZIONE FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCcczLTu5JCCN_Jq1WQ9I7woJm1WH5ij2s",
+            authDomain: "memorial-d-aloja-1a095.firebaseapp.com",
+            projectId: "memorial-d-aloja-1a095",
+            storageBucket: "memorial-d-aloja-1a095.firebasestorage.app",
+            messagingSenderId: "199060155053",
+            appId: "1:199060155053:web:75be10bef14a446bf6f424"
+        };
+        
+        // --- Firebase Setup ---
+        window.db = null;
+        window.appId = 'default-daloja-app-id'; 
+
+        const initFirebase = async () => {
+            try {
+                const app = initializeApp(firebaseConfig);
+                window.db = getFirestore(app);
+                const auth = getAuth(app);
+
+                await signInAnonymously(auth).catch(error => console.error("Errore durante il login anonimo:", error));
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        console.log("Utente autenticato anonimamente:", user.uid);
+                        window.startFirestoreListeners();
+                    } else {
+                        console.log("Autenticazione fallita.");
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase Initialization Error:", error);
+            }
+        };
+
+        // --- Collections References per Firestore ---
+        const getCollectionRef = (name) => collection(window.db, `artifacts/${window.appId}/${name}`);
+
+        // --- State Management & Calculation ---
+        let teams = [], crews = [], times = {};
+        window.activeCompetition = '8plus';
+
+        const timeToSeconds = (timeObject) => {
+            if (!timeObject || !timeObject.time) return null;
+            const timeStr = timeObject.time;
+            const finale = timeObject.finale || 'A';
+
+            const regex = /^([0-5]\d):([0-5]\d)\.(\d\d)$/;
+            const match = timeStr.match(regex);
+            if (!match) return null;
+
+            const minutes = parseInt(match[1], 10);
+            const seconds = parseInt(match[2], 10);
+            const hundredths = parseInt(match[3], 10);
+
+            let totalSeconds = minutes * 60 + seconds + hundredths / 100;
+
+            const penalty = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+            totalSeconds += penalty[finale] || 0;
+
+            return totalSeconds;
+        };
+
+        const secondsToTime = (totalSeconds) => {
+            if (totalSeconds === null || isNaN(totalSeconds)) return 'N/D';
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = Math.floor(totalSeconds % 60);
+            const hundredths = Math.round((totalSeconds * 100)) % 100;
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(hundredths).padStart(2, '0')}`;
+        };
+
+        const calculateAndRenderResults = () => {
+            if (!teams.length || !crews.length) return;
+
+            let results = [];
+            
+            if (window.activeCompetition === '8plus') {
+                const teams8 = teams.filter(t => t.teamSize === 8);
+                results = teams8.map(team => {
+                    const teamCrews = crews.filter(c => c.parentTeamId === team.id);
+                    const getAvg = (type) => {
+                        const typeCrews = teamCrews.filter(c => c.type === type);
+                        const crewTimes = typeCrews.map(c => timeToSeconds(times[c.id])).filter(t => t !== null);
+                        return crewTimes.length > 0 ? crewTimes.reduce((a, b) => a + b, 0) / crewTimes.length : null;
+                    };
+
+                    const s8 = getAvg('8+');
+                    const s4 = getAvg('4-');
+                    const s2 = getAvg('2-');
+
+                    let score = 0;
+                    let hasAtLeastOneTime = false;
+                    if (s8 !== null) { score += s8; hasAtLeastOneTime = true; }
+                    if (s4 !== null) { score += s4 * 0.5; hasAtLeastOneTime = true; }
+                    if (s2 !== null) { score += s2 * 0.25; hasAtLeastOneTime = true; }
+                    
+                    const finalScore = hasAtLeastOneTime ? score : null;
+                    const athletes = team.athletes.map(a => a.cognome).join(', ');
+
+                    return { teamName: team.teamName, genereTeam: team.genereTeam, t1: secondsToTime(s8), t2: secondsToTime(s4), t3: secondsToTime(s2), score: finalScore, athletes };
+                }).filter(r => r.score !== null);
+
+            } else if (window.activeCompetition === '4x') {
+                const teams4 = teams.filter(t => t.teamSize === 4);
+                 results = teams4.map(team => {
+                    const teamCrews = crews.filter(c => c.parentTeamId === team.id);
+                     const getAvg = (type) => {
+                        const typeCrews = teamCrews.filter(c => c.type === type);
+                        const crewTimes = typeCrews.map(c => timeToSeconds(times[c.id])).filter(t => t !== null);
+                        return crewTimes.length > 0 ? crewTimes.reduce((a, b) => a + b, 0) / crewTimes.length : null;
+                    };
+                    
+                    const s4x = getAvg('4x');
+                    const s2x = getAvg('2x');
+                    const s1x = getAvg('1x');
+
+                    let score = 0;
+                    let hasAtLeastOneTime = false;
+                    if (s4x !== null) { score += s4x; hasAtLeastOneTime = true; }
+                    if (s2x !== null) { score += s2x * 0.5; hasAtLeastOneTime = true; }
+                    if (s1x !== null) { score += s1x * 0.25; hasAtLeastOneTime = true; }
+
+                    const finalScore = hasAtLeastOneTime ? score : null;
+                    const athletes = team.athletes.map(a => a.cognome).join(', ');
+
+                     return { teamName: team.teamName, genereTeam: team.genereTeam, t1: secondsToTime(s4x), t2: secondsToTime(s2x), t3: secondsToTime(s1x), score: finalScore, athletes };
+                }).filter(r => r.score !== null);
+            }
+
+            const maleResults = results.filter(r => r.genereTeam === 'M' || r.genereTeam === 'MIX').sort((a,b) => a.score - b.score);
+            const femaleResults = results.filter(r => r.genereTeam === 'F').sort((a,b) => a.score - b.score);
+
+            updateTableHeaders();
+            renderTable('male-results-body', maleResults);
+            renderTable('female-results-body', femaleResults);
+        };
+        
+        const updateTableHeaders = () => {
+            const headers = window.activeCompetition === '8plus' 
+                ? ['8+', '4- (Media)', '2- (Media)']
+                : ['4x', '2x (Media)', '1x (Media)'];
+            
+            document.getElementById('header-t1').textContent = headers[0];
+            document.getElementById('header-t2').textContent = headers[1];
+            document.getElementById('header-t3').textContent = headers[2];
+            document.getElementById('female-header-t1').textContent = headers[0];
+            document.getElementById('female-header-t2').textContent = headers[1];
+            document.getElementById('female-header-t3').textContent = headers[2];
+        };
+
+        const renderTable = (tbodyId, data) => {
+            const tbody = document.getElementById(tbodyId);
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500 text-xl">Nessun risultato disponibile per questa categoria.</td></tr>`;
+                return;
+            }
+            data.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-slate-700/50';
+                tr.innerHTML = `
+                    <td class="p-3 md:p-5 text-center font-bold text-2xl md:text-3xl text-slate-300">${index + 1}</td>
+                    <td class="p-3 md:p-5 text-left">
+                        <div class="font-bold text-white text-xl md:text-3xl whitespace-nowrap">${row.teamName}</div>
+                        <div class="text-slate-400 text-sm md:text-base mt-2">${row.athletes}</div>
+                    </td>
+                    <td class="p-3 md:p-5 text-center font-mono text-xl md:text-3xl text-slate-100">${row.t1}</td>
+                    <td class="p-3 md:p-5 text-center font-mono text-xl md:text-3xl text-slate-100">${row.t2}</td>
+                    <td class="p-3 md:p-5 text-center font-mono text-xl md:text-3xl text-slate-100">${row.t3}</td>
+                    <td class="p-3 md:p-5 text-center font-bold text-blue-300 text-2xl md:text-4xl">${row.score.toFixed(3)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+        
+        window.startFirestoreListeners = () => {
+            onSnapshot(getCollectionRef('teams'), snapshot => {
+                teams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                calculateAndRenderResults();
+            });
+            onSnapshot(getCollectionRef('crews'), snapshot => {
+                crews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                calculateAndRenderResults();
+            });
+            onSnapshot(getCollectionRef('times'), snapshot => {
+                times = {};
+                snapshot.docs.forEach(doc => { 
+                    const data = doc.data();
+                    times[doc.id] = { time: data.time || null, finale: data.finale || 'A' };
+                });
+                calculateAndRenderResults();
+            });
+        };
+
+        window.switchCompetition = (type) => {
+            window.activeCompetition = type;
+            document.querySelectorAll('#competition-tabs button').forEach(btn => {
+                if (btn.dataset.type === type) {
+                    btn.classList.add('bg-blue-600', 'text-white');
+                    btn.classList.remove('bg-slate-700/50', 'text-slate-300');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                    btn.classList.add('bg-slate-700/50', 'text-slate-300');
+                }
+            });
+            calculateAndRenderResults();
+        };
+
+        window.onload = () => {
+            initFirebase();
+            window.switchCompetition('8plus');
+        };
+    </script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0F172A; }
+        .background-gradient { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); filter: blur(100px); z-index: -1; }
+        .gradient-1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(59, 130, 246, 0.4), transparent 70%); animation: pulse 10s infinite alternate; }
+        @keyframes pulse { from { transform: scale(0.9); } to { transform: scale(1.2); } }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center text-white p-4 antialiased">
+<body class="min-h-screen text-white p-4 lg:p-8 antialiased">
 
     <div class="fixed top-0 left-0 w-full h-full -z-10">
         <div class="background-gradient gradient-1"></div>
-        <div class="background-gradient gradient-2"></div>
     </div>
 
-    <header class="w-full max-w-5xl mx-auto pt-8 pb-4 text-center relative">
-        <h1 class="text-4xl md:text-5xl font-black tracking-tight text-slate-100 mb-2">
-            GESTIONALE CLASSIFICHE
-        </h1>
-        <h2 class="text-xl md:text-2xl font-light text-blue-400 mb-6">
-            MEMORIAL D'ALOJA
-        </h2>
+    <header class="w-full max-w-7xl mx-auto pt-6 pb-6 text-center relative">
+        <!-- Logo Aggiunto -->
+        <div class="flex justify-center mb-4">
+            <img src="logo.png" alt="Logo Federazione Italiana Canottaggio" class="h-24">
+        </div>
+        <h1 class="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight text-slate-100 mb-2">CLASSIFICHE</h1>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-light text-blue-400">MEMORIAL D'ALOJA</h2>
     </header>
 
-    <main id="app-container" class="w-full max-w-5xl mx-auto py-4 flex flex-col items-center">
+    <main class="w-full max-w-7xl mx-auto py-4 space-y-12">
         
-        <section id="home-page" class="w-full">
-             <div class="grid w-full grid-cols-1 md:grid-cols-3 gap-6">
-                
-                <a href="crea_equipaggi.html" class="main-link block p-8 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-lg hover:bg-white/10 transition-all duration-300 card-enter hover:scale-[1.03] hover:border-blue-400/50" style="animation-delay: 0.3s;">
-                    <div class="mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-blue-400 group-hover:scale-110 transition-transform">
-                            <path d="M17 19c-.2-.5-1-.9-1.9-.9-1.8 0-3.6.9-4.7 2.4"/>
-                            <path d="M21 17c-.2-.5-1-.9-1.9-.9-1.8 0-3.6.9-4.7 2.4"/>
-                            <path d="M15 5c0 3-2 5-5 5S5 8 5 5s2-5 5-5 5 2 5 5Z"/>
-                            <path d="M20 10c0 3-2 5-5 5s-5-2-5-5 2-5 5-5 5 2 5 5Z"/>
-                        </svg>
-                    </div>
-                    <h2 class="text-xl md:text-2xl font-bold text-slate-100 mb-1">CREA EQUIPAGGI</h2>
-                    <p class="text-sm text-slate-400">Aggiungi, modifica o elimina le formazioni di gara.</p>
-                </a>
-                
-                <a href="assegna_tempi.html" class="main-link block p-8 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-lg hover:bg-white/10 transition-all duration-300 card-enter hover:scale-[1.03] hover:border-purple-400/50" style="animation-delay: 0.5s;">
-                    <div class="mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-purple-400 group-hover:scale-110 transition-transform">
-                            <circle cx="12" cy="13" r="8"/>
-                            <polyline points="12 9 12 13 14 15"/>
-                            <path d="M18.3 5.7L16 8"/>
-                            <path d="M5.7 5.7L8 8"/>
-                        </svg>
-                    </div>
-                    <h2 class="text-xl md:text-2xl font-bold text-slate-100 mb-1">ASSEGNA TEMPI</h2>
-                    <p class="text-sm text-slate-400">Inserisci i tempi di gara e calcola i punteggi.</p>
-                </a>
-                
-                <a href="classifiche.html" class="main-link block p-8 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-lg hover:bg-white/10 transition-all duration-300 card-enter hover:scale-[1.03] hover:border-emerald-400/50" style="animation-delay: 0.7s;">
-                    <div class="mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-emerald-400 group-hover:scale-110 transition-transform">
-                            <path d="M12 21.5V10l3.96-3.96a2 2 0 0 1 2.83 0L22 8.35"/>
-                            <path d="M12 21.5V10l-3.96-3.96a2 2 0 0 0-2.83 0L2 8.35"/>
-                            <path d="M15.42 16.5L12 10 8.58 16.5a2 2 0 0 0-.29 1.13c0 1.28.66 2.5 1.7 3.25l2.02 1.43 2.02-1.43c1.04-.75 1.7-1.97 1.7-3.25a2 2 0 0 0-.29-1.13Z"/>
-                            <path d="m14 7 1.4-1.4a2 2 0 0 0 0-2.83L13 1"/>
-                        </svg>
-                    </div>
-                    <h2 class="text-xl md:text-2xl font-bold text-slate-100 mb-1">CLASSIFICHE</h2>
-                    <p class="text-sm text-slate-400">Visualizza la classifica in tempo reale (Maxischermo).</p>
-                </a>
-                
+        <div id="competition-tabs" class="flex justify-center space-x-2 mb-8 p-1 bg-slate-800/60 rounded-xl max-w-md mx-auto">
+            <button data-type="8plus" onclick="window.switchCompetition('8plus')" class="w-full font-semibold py-3 px-4 rounded-lg transition-colors duration-300 text-base md:text-lg">
+                Classifica 8+
+            </button>
+            <button data-type="4x" onclick="window.switchCompetition('4x')" class="w-full font-semibold py-3 px-4 rounded-lg transition-colors duration-300 text-base md:text-lg">
+                Classifica 4x
+            </button>
+        </div>
+
+        <section>
+            <h3 class="text-3xl md:text-4xl font-semibold text-slate-100 mb-6 border-b-2 border-blue-500 pb-3">Classifica Maschile</h3>
+            <div class="bg-white/5 border border-white/10 rounded-2xl overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-white/10">
+                        <tr>
+                            <th class="p-3 md:p-5 w-20 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Pos.</th>
+                            <th class="p-3 md:p-5 text-left font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Team</th>
+                            <th id="header-t1" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">8+</th>
+                            <th id="header-t2" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">4- (Media)</th>
+                            <th id="header-t3" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">2- (Media)</th>
+                            <th class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Punteggio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="male-results-body">
+                        <tr><td colspan="6" class="text-center py-8 text-slate-500 text-xl">Caricamento risultati...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h3 class="text-3xl md:text-4xl font-semibold text-slate-100 mb-6 border-b-2 border-purple-500 pb-3">Classifica Femminile</h3>
+             <div class="bg-white/5 border border-white/10 rounded-2xl overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-white/10">
+                        <tr>
+                            <th class="p-3 md:p-5 w-20 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Pos.</th>
+                            <th class="p-3 md:p-5 text-left font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Team</th>
+                            <th id="female-header-t1" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">---</th>
+                            <th id="female-header-t2" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">---</th>
+                            <th id="female-header-t3" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">---</th>
+                            <th class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Punteggio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="female-results-body">
+                         <tr><td colspan="6" class="text-center py-8 text-slate-500 text-xl">Caricamento risultati...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </section>
         
     </main>
-
 </body>
 </html>
