@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Classifiche - Memorial D'Aloja</title>
+    <title>RANKING - Memorial D'Aloja</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -249,7 +249,7 @@
         <div class="flex justify-center mb-4">
             <img src="logo.png" alt="Logo Federazione Italiana Canottaggio" class="h-24">
         </div>
-        <h1 class="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight text-slate-100 mb-2">CLASSIFICHE</h1>
+        <h1 class="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight text-slate-100 mb-2">RANKING</h1>
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-light text-blue-400">MEMORIAL D'ALOJA</h2>
     </header>
 
@@ -257,15 +257,15 @@
         
         <div id="competition-tabs" class="flex justify-center space-x-2 mb-8 p-1 bg-slate-800/60 rounded-xl max-w-md mx-auto">
             <button data-type="8plus" onclick="window.switchCompetition('8plus')" class="w-full font-semibold py-3 px-4 rounded-lg transition-colors duration-300 text-base md:text-lg">
-                Classifica 8+
+                RANKING 8+
             </button>
             <button data-type="4x" onclick="window.switchCompetition('4x')" class="w-full font-semibold py-3 px-4 rounded-lg transition-colors duration-300 text-base md:text-lg">
-                Classifica 4x
+                RANKING 4x
             </button>
         </div>
 
         <section>
-            <h3 class="text-3xl md:text-4xl font-semibold text-slate-100 mb-6 border-b-2 border-blue-500 pb-3">Classifica Maschile</h3>
+            <h3 class="text-3xl md:text-4xl font-semibold text-slate-100 mb-6 border-b-2 border-blue-500 pb-3">MEN'S RANKING</h3>
             <div class="bg-white/5 border border-white/10 rounded-2xl overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-white/10">
@@ -273,20 +273,20 @@
                             <th class="p-3 md:p-5 w-20 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Pos.</th>
                             <th class="p-3 md:p-5 text-left font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Team</th>
                             <th id="header-t1" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">8+</th>
-                            <th id="header-t2" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">4- (Media)</th>
-                            <th id="header-t3" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">2- (Media)</th>
-                            <th class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Punteggio</th>
+                            <th id="header-t2" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">4- (AVE)</th>
+                            <th id="header-t3" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">2- (AVE)</th>
+                            <th class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Points</th>
                         </tr>
                     </thead>
                     <tbody id="male-results-body">
-                        <tr><td colspan="6" class="text-center py-8 text-slate-500 text-xl">Caricamento risultati...</td></tr>
+                        <tr><td colspan="6" class="text-center py-8 text-slate-500 text-xl">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
         <section>
-            <h3 class="text-3xl md:text-4xl font-semibold text-slate-100 mb-6 border-b-2 border-purple-500 pb-3">Classifica Femminile</h3>
+            <h3 class="text-3xl md:text-4xl font-semibold text-slate-100 mb-6 border-b-2 border-purple-500 pb-3">WOMEN'S RANKING</h3>
              <div class="bg-white/5 border border-white/10 rounded-2xl overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-white/10">
@@ -296,11 +296,11 @@
                             <th id="female-header-t1" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">---</th>
                             <th id="female-header-t2" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">---</th>
                             <th id="female-header-t3" class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">---</th>
-                            <th class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Punteggio</th>
+                            <th class="p-3 md:p-5 w-40 text-center font-semibold uppercase text-slate-300 tracking-wider text-sm md:text-lg whitespace-nowrap">Points</th>
                         </tr>
                     </thead>
                     <tbody id="female-results-body">
-                         <tr><td colspan="6" class="text-center py-8 text-slate-500 text-xl">Caricamento risultati...</td></tr>
+                         <tr><td colspan="6" class="text-center py-8 text-slate-500 text-xl">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
